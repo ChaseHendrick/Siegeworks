@@ -1,1 +1,1 @@
-{"name":"siegeworks","private":true,"version":"1.0.0","type":"module","scripts":{"build":"node build.mjs","test":"node tests/simulation.mjs && node tests/collisions.mjs"},"dependencies":{"three":"0.180.0","cannon-es":"0.20.0"},"devDependencies":{"esbuild":"0.25.10"}}
+{"name":"siegeworks","private":true,"version":"1.0.0","type":"module","scripts":{"build":"node build.mjs","test":"node tests/simulation.mjs && node tests/collisions.mjs && node tests/ai.mjs"},"dependencies":{"three":"0.180.0","cannon-es":"0.20.0"},"devDependencies":{"esbuild":"0.25.10"}}

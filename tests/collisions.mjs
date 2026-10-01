@@ -10,7 +10,10 @@ for(const s of SCENARIOS){const sim=new SiegeSimulation(s.id),p=new SiegePhysics
  for(const [x,z] of [[s.camp[0]+4,s.camp[1]+2],[s.end[0]-4,3],[s.fort[0],25]]){const b=p.makeDynamic(0);b.position.set(x,p.floorAt(x,z)+12,z);b.velocity.set(7,-65,3);b.quaternion.setFromEuler(1.4,.6,.8);for(let i=0;i<150;i++){p.update(1/60);assert(p.terrainPenetration(b)<.02,`${s.id} fast falling/tumbling body must stay above terrain`);}}
  for(let i=0;i<200;i++){const point=patrolPoint(s,i/200);assert(point.y>=p.floorAt(point.x,point.z));}
  // Construction must still work with the actual city/wall navigation obstacles.
- sim.built.fill(0);sim.revision++;sim.completedLoads=0;p.refreshTerrain();let violations=0;for(let i=0;i<3600;i++){sim.update(1/30);for(const a of sim.agents.filter(a=>!a.disabled&&!a.wallPatrol)){if(p.boxes.some(b=>b.active&&b.top>a.y+.12&&b.bottom<a.y+1.65&&containsPoint(b,a.x,a.z,.5)))violations++;}}
+ sim.built.fill(0);sim.revision++;sim.completedLoads=0;p.refreshTerrain();let violations=0;
+ // Static footprints are bucketed once, so each figure only checks the few boxes near it.
+ const grid=new Map(),cell=(x,z)=>Math.floor(x/4)*1000+Math.floor(z/4);for(const b of p.boxes.filter(b=>b.active&&!b.moving)){const r=Math.hypot(b.w,b.d)/2+.6;for(let x=Math.floor((b.x-r)/4);x<=Math.floor((b.x+r)/4);x++)for(let z=Math.floor((b.z-r)/4);z<=Math.floor((b.z+r)/4);z++){const k=x*1000+z;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(b);}}
+ for(let i=0;i<3600;i++){sim.update(1/30);for(const a of sim.agents){if(a.disabled||a.wallPatrol)continue;if((grid.get(cell(a.x,a.z))||[]).some(b=>b.active&&b.top>a.y+.12&&b.bottom<a.y+1.65&&containsPoint(b,a.x,a.z,.5)))violations++;}}
  assert.equal(violations,0,s.id+' controlled crews stay outside walls and buildings');assert(sim.completedLoads>0,s.id+' crews still reach their jobs');
  const route=cartRoute(s);let minDistance=Infinity;for(let t=0;t<route.total;t+=.07){const points=Array.from({length:5},(_,i)=>cartPoint(route,t+i*route.total/5));for(let i=0;i<5;i++)for(let j=i+1;j<5;j++)minDistance=Math.min(minDistance,Math.hypot(points[i].x-points[j].x,points[i].z-points[j].z));}assert(minDistance>2.3,s.id+' carts stay separated through the turns');
  console.log(s.id,'terrain match, fast drops, solid architecture, construction and cart lanes passed.',sim.completedLoads,'loads.');}
